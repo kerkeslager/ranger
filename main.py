@@ -1,6 +1,7 @@
 import flet as ft
 
 from common import *
+import equity
 
 CLUB_GREEN = '#006600'
 DIAMOND_BLUE = '#000077'
@@ -152,7 +153,6 @@ class RangeEditor(ft.Column):
             def handler(e):
                 for combo in starting_hand_to_combos(starting_hand):
                     self.range[combo] = not self.range[combo]
-                print_range(self.range)
 
             return handler
 
@@ -189,8 +189,9 @@ class RangeEditor(ft.Column):
         )
 
 class EquityForm(ft.Column):
-    def __init__(self):
-        data = ft.DataTable(
+    def __init__(self, *, range_editors):
+
+        self.data_table = ft.DataTable(
             columns=[
                 ft.DataColumn(ft.Text('Range')),
                 ft.DataColumn(ft.Text('Equity')),
@@ -198,18 +199,27 @@ class EquityForm(ft.Column):
             rows=[
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text('Range 1')),
-                        ft.DataCell(ft.Text('50%')),
-                    ],
-                ),
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text('Range 2')),
-                        ft.DataCell(ft.Text('50%')),
+                        ft.DataCell(ft.Text('--')),
+                        ft.DataCell(ft.Text('--%')),
                     ],
                 ),
             ],
         )
+
+        self.range_editors = range_editors
+
+        def run_equity_calc(e):
+            ranges = [re.range for re in self.range_editors]
+            equities = equity.get_equity(set(), ranges)
+
+            self.data_table.rows = [
+                ft.DataRow(cells=[
+                    ft.DataCell(ft.Text(range_editor.name)),
+                    ft.DataCell(ft.Text(fraction_to_percent(eq))),
+                ])
+                for range_editor, eq in zip(self.range_editors, equities)
+            ]
+            self.data_table.update()
 
         super().__init__(
             spacing=8,
@@ -220,8 +230,9 @@ class EquityForm(ft.Column):
                         shape=ft.ContinuousRectangleBorder(radius=15),
                         side=ft.BorderSide(width=0, color='transparent'),
                     ),
+                    on_click=run_equity_calc,
                 ),
-                data,
+                self.data_table,
             ],
         )
 
@@ -229,7 +240,12 @@ def main(page: ft.Page):
     board_editor = BoardEditor()
     hero_range_editor = RangeEditor(name='Hero')
     villain_range_editor = RangeEditor(name='Villain')
-    equity_form = EquityForm()
+    equity_form = EquityForm(
+        range_editors=[
+            hero_range_editor,
+            villain_range_editor,
+        ],
+    )
     page.add(board_editor)
     page.add(ft.Row(
         controls=[
