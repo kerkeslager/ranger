@@ -2,7 +2,7 @@ import unittest
 
 from equity import *
 
-class EquityTests(unittest.TestCase):
+class GetEquityTests(unittest.TestCase):
     def test_preflop_equity(self):
         random.seed(42)
         hero_range = {
@@ -20,7 +20,7 @@ class EquityTests(unittest.TestCase):
             frozenset(['As','Ks']): True,
         }
 
-        result = equity(set(), [hero_range, villain_range])
+        result = get_equity(set(), [hero_range, villain_range])
         result = [fraction_to_percent(e) for e in result]
 
         self.assertEqual(
@@ -41,7 +41,7 @@ class EquityTests(unittest.TestCase):
             frozenset(['Qd','Qs']): True,
         }
 
-        result = equity(board, [hero_range, villain_range])
+        result = get_equity(board, [hero_range, villain_range])
         result = [fraction_to_percent(e) for e in result]
 
         self.assertEqual(
@@ -62,7 +62,7 @@ class EquityTests(unittest.TestCase):
             frozenset(['Qd','Qs']): True,
         }
 
-        result = equity(board, [hero_range, villain_range])
+        result = get_equity(board, [hero_range, villain_range])
         result = [fraction_to_percent(e) for e in result]
 
         self.assertEqual(
@@ -83,7 +83,7 @@ class EquityTests(unittest.TestCase):
             frozenset(['Qd','Qs']): True,
         }
 
-        result = equity(board, [hero_range, villain_range])
+        result = get_equity(board, [hero_range, villain_range])
         result = [fraction_to_percent(e) for e in result]
 
         self.assertEqual(

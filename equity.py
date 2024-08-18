@@ -16,7 +16,7 @@ def sample(iterator, n):
     nth[0] = 1
     return itertools.compress(iterator, itertools.cycle(nth))
 
-def equity(board, ranges):
+def get_equity(board, ranges):
     assert len(board) in {0,3,4,5}
 
     if len(board) == 0:
