@@ -1,3 +1,4 @@
+import fractions
 import unittest
 
 from common import *
@@ -73,4 +74,45 @@ class ComboToStartingHand(unittest.TestCase):
         self.assertEqual(
             combo_to_starting_hand(['Ah', 'Kd']),
             'AKo',
+        )
+
+class FractionToRatioTests(unittest.TestCase):
+    def test_self_greater_than_other(self):
+        self.assertEqual(
+            fraction_to_ratio(fractions.Fraction(2, 3)),
+            '2:1',
+        )
+
+    def test_self_less_than_other(self):
+        self.assertEqual(
+            fraction_to_ratio(fractions.Fraction(1,3)),
+            '1:2',
+        )
+
+    def test_decimals(self):
+        self.assertEqual(
+            fraction_to_ratio(fractions.Fraction(3, 5)),
+            '1.5:1',
+        )
+        self.assertEqual(
+            fraction_to_ratio(fractions.Fraction(2, 5)),
+            '1:1.5',
+        )
+
+    def test_rounding(self):
+        self.assertEqual(
+            fraction_to_ratio(fractions.Fraction(4, 7)),
+            '1.3:1',
+        )
+        self.assertEqual(
+            fraction_to_ratio(fractions.Fraction(3, 7)),
+            '1:1.3',
+        )
+        self.assertEqual(
+            fraction_to_ratio(fractions.Fraction(5, 8)),
+            '1.7:1',
+        )
+        self.assertEqual(
+            fraction_to_ratio(fractions.Fraction(3, 8)),
+            '1:1.7',
         )

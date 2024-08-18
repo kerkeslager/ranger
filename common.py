@@ -75,5 +75,19 @@ def combo_to_starting_hand(combo):
 
     return hr + lr + 'o'
 
+def fraction_to_ratio(x):
+    y = 1 - x
+    x = x.numerator
+    y = y.numerator
 
+    if x > y:
+        return '{}:1'.format(
+            '{:.1f}'.format(x / y).rstrip('0').rstrip('.')
+        )
 
+    if x < y:
+        return '1:{}'.format(
+            '{:.1f}'.format(y / x).rstrip('0').rstrip('.')
+        )
+
+    return '1:1'
