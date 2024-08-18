@@ -95,3 +95,9 @@ def fraction_to_ratio(x):
 def fraction_to_percent(x):
     n, d = x.as_integer_ratio()
     return '{:.0%}'.format(n / d)
+
+def print_range(r):
+    result = '{ '
+    for combo in r:
+        result += ''.join(card for card in combo) + ': ' + str(r[combo]) + ', '
+    print(result)

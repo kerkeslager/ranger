@@ -93,7 +93,7 @@ class BoardEditor(ft.Column):
             ]
         )
 
-class PreflopRangeButton(ft.Container):
+class RangeButton(ft.Container):
     def __init__(self, starting_hand, *, is_selected=False, on_click=None):
         self._is_selected = is_selected
         self.starting_hand = starting_hand
@@ -139,7 +139,7 @@ class PreflopRangeButton(ft.Container):
 
     is_selected = property(_get_is_selected, _set_is_selected)
 
-class PreflopRangeEditor(ft.Column):
+class RangeEditor(ft.Column):
     def __init__(self, *, name, pf_range=None):
         self.name = name
 
@@ -150,7 +150,9 @@ class PreflopRangeEditor(ft.Column):
 
         def toggle_starting_hand(starting_hand):
             def handler(e):
-                self.range[starting_hand] = not self.range[starting_hand]
+                for combo in starting_hand_to_combos(starting_hand):
+                    self.range[combo] = not self.range[combo]
+                print_range(self.range)
 
             return handler
 
@@ -167,9 +169,11 @@ class PreflopRangeEditor(ft.Column):
                     RANKS[j] + RANKS[i] + 'o' if i > j else
                     RANKS[i] + RANKS[i]
                 )
-                self.range[starting_hand] = False
 
-                row_controls.append(PreflopRangeButton(
+                for combo in starting_hand_to_combos(starting_hand):
+                    self.range[combo] = False
+
+                row_controls.append(RangeButton(
                     starting_hand,
                     on_click=toggle_starting_hand(starting_hand),
                 ))
@@ -213,7 +217,7 @@ class EquityForm(ft.Column):
                 ft.FilledButton(
                     text='Run Equity Calc',
                     style=ft.ButtonStyle(
-                        shape=ft.ContinuousRectangleBorder(radius=30),
+                        shape=ft.ContinuousRectangleBorder(radius=15),
                         side=ft.BorderSide(width=0, color='transparent'),
                     ),
                 ),
@@ -223,8 +227,8 @@ class EquityForm(ft.Column):
 
 def main(page: ft.Page):
     board_editor = BoardEditor()
-    hero_range_editor = PreflopRangeEditor(name='Range 1')
-    villain_range_editor = PreflopRangeEditor(name='Range 2')
+    hero_range_editor = RangeEditor(name='Hero')
+    villain_range_editor = RangeEditor(name='Villain')
     equity_form = EquityForm()
     page.add(board_editor)
     page.add(ft.Row(
