@@ -116,3 +116,16 @@ class FractionToRatioTests(unittest.TestCase):
             fraction_to_ratio(fractions.Fraction(3, 8)),
             '1:1.7',
         )
+
+class FractionToPercentTests(unittest.TestCase):
+    def test_percent_rounding_down(self):
+        self.assertEqual(
+            fraction_to_percent(fractions.Fraction(1,3)),
+            '33%',
+        )
+
+    def test_percent_rounding_up(self):
+        self.assertEqual(
+            fraction_to_percent(fractions.Fraction(2,3)),
+            '67%',
+        )

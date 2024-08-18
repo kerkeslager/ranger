@@ -91,3 +91,7 @@ def fraction_to_ratio(x):
         )
 
     return '1:1'
+
+def fraction_to_percent(x):
+    n, d = x.as_integer_ratio()
+    return '{:.0%}'.format(n / d)
