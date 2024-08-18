@@ -2,6 +2,11 @@ import flet as ft
 
 from common import *
 
+CLUB_GREEN = '#006600'
+DIAMOND_BLUE = '#000077'
+HEART_RED = '#880000'
+SPADE_BLACK = '#000000'
+
 SUIT_DISPLAY = {
     'c': '♣',
     'd': '♦',
@@ -9,10 +14,10 @@ SUIT_DISPLAY = {
     's': '♠',
 }
 SUIT_COLOR = {
-    'c': '#007700',
-    'd': '#000077',
-    'h': '#770000',
-    's': '#000000',
+    'c': CLUB_GREEN,
+    'd': DIAMOND_BLUE,
+    'h': HEART_RED,
+    's': SPADE_BLACK,
 }
 
 class CardDropdownOption(ft.dropdown.Option):
@@ -43,6 +48,7 @@ class CardDropdown(ft.Dropdown):
             options=options,
             bgcolor='#dddddd',
             on_change=on_change,
+            icon_enabled_color='#000000',
         )
 
     def update_options(self, board):
@@ -178,15 +184,54 @@ class PreflopRangeEditor(ft.Column):
             spacing=4,
         )
 
+class EquityForm(ft.Column):
+    def __init__(self):
+        data = ft.DataTable(
+            columns=[
+                ft.DataColumn(ft.Text('Range')),
+                ft.DataColumn(ft.Text('Equity')),
+            ],
+            rows=[
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text('Range 1')),
+                        ft.DataCell(ft.Text('50%')),
+                    ],
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text('Range 2')),
+                        ft.DataCell(ft.Text('50%')),
+                    ],
+                ),
+            ],
+        )
+
+        super().__init__(
+            spacing=8,
+            controls=[
+                ft.FilledButton(
+                    text='Run Equity Calc',
+                    style=ft.ButtonStyle(
+                        shape=ft.ContinuousRectangleBorder(radius=30),
+                        side=ft.BorderSide(width=0, color='transparent'),
+                    ),
+                ),
+                data,
+            ],
+        )
+
 def main(page: ft.Page):
     board_editor = BoardEditor()
     hero_range_editor = PreflopRangeEditor(name='Range 1')
     villain_range_editor = PreflopRangeEditor(name='Range 2')
+    equity_form = EquityForm()
     page.add(board_editor)
     page.add(ft.Row(
         controls=[
             hero_range_editor,
             villain_range_editor,
+            equity_form,
         ],
         spacing=10,
     ))
