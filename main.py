@@ -218,7 +218,7 @@ class RangeEditor(ft.Stack):
         )
 
 class EquityForm(ft.Column):
-    def __init__(self, *, range_editors):
+    def __init__(self, *, board_editor, range_editors):
 
         self.data_table = ft.DataTable(
             columns=[
@@ -235,11 +235,18 @@ class EquityForm(ft.Column):
             ],
         )
 
+        self.board_editor = board_editor
         self.range_editors = range_editors
 
         def run_equity_calc(e):
+            board = frozenset(
+                card
+                for card in self.board_editor.cards
+                if card and card.strip()
+            )
+
             ranges = [re.range for re in self.range_editors]
-            equities = equity.get_equity(set(), ranges)
+            equities = equity.get_equity(board, ranges)
 
             self.data_table.rows = [
                 ft.DataRow(cells=[
@@ -270,6 +277,7 @@ def main(page: ft.Page):
     hero_range_editor = RangeEditor(name='Hero')
     villain_range_editor = RangeEditor(name='Villain')
     equity_form = EquityForm(
+        board_editor=board_editor,
         range_editors=[
             hero_range_editor,
             villain_range_editor,
