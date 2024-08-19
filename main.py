@@ -95,10 +95,11 @@ class BoardEditor(ft.Column):
         )
 
 class RangeButton(ft.Container):
-    def __init__(self, starting_hand, *, is_selected=False, on_click=None):
+    def __init__(self, starting_hand, *, is_selected=False, on_click=None, on_long_press=None):
         self._is_selected = is_selected
         self.starting_hand = starting_hand
         self._on_click = on_click
+        self._on_long_press = on_long_press
 
         def on_click(e):
             self.is_selected = not self.is_selected
@@ -106,10 +107,14 @@ class RangeButton(ft.Container):
                 self._on_click(e)
 
         def on_long_press(e):
-            print('Long pressed {}.'.format(self.starting_hand))
+            if self._on_long_press:
+                self._on_long_press(e)
+
+
+        self.text = ft.Text(starting_hand, color=ft.colors.ON_SECONDARY_CONTAINER)
 
         super().__init__(
-            content=ft.Text(starting_hand, color=ft.colors.ON_SECONDARY_CONTAINER),
+            content=self.text,
             alignment=ft.alignment.center,
             width=32,
             height=32,
@@ -128,19 +133,19 @@ class RangeButton(ft.Container):
 
         if is_selected:
             self.bgcolor = ft.colors.PRIMARY_CONTAINER
-            self.content.color = ft.colors.ON_PRIMARY_CONTAINER
+            self.text.color = ft.colors.ON_PRIMARY_CONTAINER
             self.border = ft.border.all(1, ft.colors.ON_PRIMARY_CONTAINER)
 
         else:
             self.bgcolor = ft.colors.SECONDARY_CONTAINER
-            self.content.color = ft.colors.ON_SECONDARY_CONTAINER
+            self.text.color = ft.colors.ON_SECONDARY_CONTAINER
             self.border = ft.border.all(1, ft.colors.ON_SECONDARY_CONTAINER)
 
         self.update()
 
     is_selected = property(_get_is_selected, _set_is_selected)
 
-class RangeEditor(ft.Column):
+class RangeEditor(ft.Stack):
     def __init__(self, *, name, pf_range=None):
         self.name = name
 
@@ -153,6 +158,24 @@ class RangeEditor(ft.Column):
             def handler(e):
                 for combo in starting_hand_to_combos(starting_hand):
                     self.range[combo] = not self.range[combo]
+
+            return handler
+
+        def edit_combos(starting_hand):
+            def handler(e):
+                self.controls.append(
+                    ft.Container(
+                        content=ft.Text('Long press {}'.format(starting_hand)),
+                        alignment=ft.alignment.center,
+                        width=100,
+                        height=100,
+                        bgcolor=ft.colors.PRIMARY,
+                        border=ft.border.all(1, ft.colors.ON_PRIMARY),
+                        border_radius=ft.border_radius.all(5),
+                    )
+                )
+                self.update()
+                print('Long pressed {}'.format(starting_hand))
 
             return handler
 
@@ -176,6 +199,7 @@ class RangeEditor(ft.Column):
                 row_controls.append(RangeButton(
                     starting_hand,
                     on_click=toggle_starting_hand(starting_hand),
+                    on_long_press=edit_combos(starting_hand),
                 ))
 
             column_controls.append(ft.Row(
@@ -184,8 +208,13 @@ class RangeEditor(ft.Column):
             ))
 
         super().__init__(
-            controls=column_controls,
-            spacing=4,
+            controls=[
+                ft.Column(
+                    controls=column_controls,
+                    spacing=4,
+                ),
+            ],
+            alignment=ft.alignment.center,
         )
 
 class EquityForm(ft.Column):
@@ -255,6 +284,10 @@ def main(page: ft.Page):
         ],
         spacing=10,
     ))
+
+    page.window.top = 0
+    page.window.left = 0
+    page.window.maximized = True
     page.update()
 
 ft.app(target=main)
