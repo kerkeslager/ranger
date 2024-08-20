@@ -96,6 +96,9 @@ def fraction_to_percent(x):
     n, d = x.as_integer_ratio()
     return '{:.0%}'.format(n / d)
 
+def is_range_empty(r):
+    return not any(r[k] for k in r)
+
 def print_range(r):
     result = '{ '
     for combo in r:

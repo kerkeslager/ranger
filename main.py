@@ -4,7 +4,7 @@ from common import *
 import equity
 
 CLUB_GREEN = '#006600'
-DIAMOND_BLUE = '#000077'
+DIAMOND_BLUE = '#000099'
 HEART_RED = '#880000'
 SPADE_BLACK = '#000000'
 
@@ -21,78 +21,183 @@ SUIT_COLOR = {
     's': SPADE_BLACK,
 }
 
-class CardDropdownOption(ft.dropdown.Option):
-    def __init__(self, rank, suit):
+class CardDisplay(ft.Container):
+    SMALL = (40, 64, 20)
+    LARGE = (60, 96, 36)
+    def __init__(self, card, size=SMALL):
+        self.card = card
         super().__init__(
             alignment=ft.alignment.center,
-            text=rank + SUIT_DISPLAY[suit],
-            key=rank + suit,
-            text_style=ft.TextStyle(
-                color=SUIT_COLOR[suit],
-                bgcolor='#dddddd',
+            width=size[0],
+            height=size[1],
+            border_radius=5,
+            bgcolor='white',
+            padding=0,
+            content=ft.Column(
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=0,
+                controls=[
+                    ft.Text(
+                        self.card[0],
+                        color=SUIT_COLOR[self.card[1]],
+                        size=size[2],
+                        style=ft.TextStyle(
+                            decoration=ft.TextDecoration.NONE,
+                            height=1,
+                        ),
+                    ),
+                    ft.Text(
+                        SUIT_DISPLAY[self.card[1]],
+                        color=SUIT_COLOR[self.card[1]],
+                        size=size[2],
+                        style=ft.TextStyle(
+                            decoration=ft.TextDecoration.NONE,
+                            height=1,
+                        ),
+                    ),
+                ],
             ),
         )
 
+class BoardCardArea(ft.GestureDetector):
+    def __init__(self, *, on_card_return):
+        self._card = None
 
-class CardDropdown(ft.Dropdown):
-    def __init__(self, *, label=None, on_change):
-        options = [ ft.dropdown.Option(text=' ', key=' ') ] + [
-            CardDropdownOption(rank, suit)
-            for suit in SUITS
-            for rank in RANKS
-        ]
+        width, height, font_size = CardDisplay.LARGE
+        self._no_card_content = ft.Container(
+            width=width,
+            height=height,
+            bgcolor='#777777',
+            border_radius=5,
+        )
+        self.on_card_return = on_card_return
+
+        def on_double_tap(e):
+            if self.card:
+                self.card = None
+
         super().__init__(
-            border_color='transparent',
-            label=label,
-            width=75,
-            dense=True,
-            options=options,
-            bgcolor='#dddddd',
-            on_change=on_change,
-            icon_enabled_color='#000000',
+            content=self._no_card_content,
+            on_double_tap=on_double_tap,
         )
 
-    def update_options(self, board):
-        self.options = [ ft.dropdown.Option(text=' ', key=' ') ] + [
-            CardDropdownOption(rank, suit)
-            for suit in SUITS
-            for rank in RANKS
-            if rank + suit not in board or rank + suit == self.value
-        ]
+    def _get_card(self):
+        return self._card
+
+    def _set_card(self, card):
+        if self._card == card:
+            return
+
+        if card is None:
+            self.on_card_return(self._card)
+            self.content = self._no_card_content
+        else:
+            self.content = CardDisplay(card, CardDisplay.LARGE)
+
+        self._card = card
         self.update()
 
+    card = property(_get_card, _set_card)
 
-class BoardEditor(ft.Column):
-    def __init__(self):
-        self.cards = [None, None, None, None, None]
+class DeckCardArea(ft.GestureDetector):
+    def __init__(self, *, card, try_set_card):
+        self.card = card
+        self._is_in_use = False
+        self._in_use_content = ft.Container(
+            width=40,
+            height=64,
+            bgcolor='#777777',
+            border_radius=5,
+        )
 
-        def get_on_change(index):
-            def on_change(e):
-                self.cards[index] = e.control.value
-                board = set(self.cards)
-                for cc in self.card_controls:
-                    if isinstance(cc, CardDropdown):
-                        cc.update_options(board)
-
-            return on_change
-
-        self.card_controls = [
-            CardDropdown(on_change=get_on_change(0)),
-            CardDropdown(on_change=get_on_change(1)),
-            CardDropdown(on_change=get_on_change(2)),
-            ft.VerticalDivider(width=16),
-            CardDropdown(on_change=get_on_change(3)),
-            ft.VerticalDivider(width=16),
-            CardDropdown(on_change=get_on_change(4)),
-        ]
+        def on_double_tap(e):
+            if not self.is_in_use:
+                self.is_in_use = try_set_card(self.card)
 
         super().__init__(
-            spacing=4,
-            controls=[
-                ft.Text('Community cards'),
-                ft.Row(controls=self.card_controls),
-            ]
+            content=CardDisplay(self.card),
+            on_double_tap=on_double_tap,
         )
+
+    def _get_is_in_use(self):
+        return self._is_in_use
+
+    def _set_is_in_use(self, is_in_use):
+        if self._is_in_use == is_in_use:
+            return
+
+        self._is_in_use = is_in_use
+        if is_in_use:
+            self.content = self._in_use_content
+        else:
+            self.content = CardDisplay(self.card)
+
+        self.update()
+
+    is_in_use = property(_get_is_in_use, _set_is_in_use)
+
+
+class BoardEditor2(ft.ExpansionTile):
+    def __init__(self):
+        def on_card_return(card):
+            self.card_to_control_mapping[card].is_in_use = False
+
+        self.board_card_areas = [
+            BoardCardArea(on_card_return=on_card_return),
+            BoardCardArea(on_card_return=on_card_return),
+            BoardCardArea(on_card_return=on_card_return),
+            BoardCardArea(on_card_return=on_card_return),
+            BoardCardArea(on_card_return=on_card_return),
+        ]
+
+        self.board_controls = [
+            self.board_card_areas[0],
+            self.board_card_areas[1],
+            self.board_card_areas[2],
+            ft.VerticalDivider(width=16),
+            self.board_card_areas[3],
+            ft.VerticalDivider(width=16),
+            self.board_card_areas[4],
+        ]
+
+        def try_set_card(card):
+            for bca in self.board_card_areas:
+                if not bca.card:
+                    bca.card = card
+                    return True
+
+            return False
+
+        self.deck_controls = []
+        self.card_to_control_mapping = {}
+
+        for suit in SUITS:
+            row = []
+
+            for rank in RANKS:
+                card = rank + suit
+                control = DeckCardArea(
+                    card=rank + suit,
+                    try_set_card=try_set_card,
+                )
+                row.append(control)
+                self.card_to_control_mapping[card] = control
+
+            self.deck_controls.append(ft.Row(controls=row))
+
+        super().__init__(
+            title=ft.Row(controls=self.board_controls),
+            affinity=ft.TileAffinity.LEADING,
+            controls=[ft.Column(controls=self.deck_controls)],
+            controls_padding=ft.padding.all(18),
+            initially_expanded=False,
+        )
+
+    def _get_cards(self):
+        return [ bca.card for bca in self.board_card_areas ]
+
+    cards = property(_get_cards)
 
 class RangeButton(ft.Container):
     def __init__(self, starting_hand, *, is_selected=False, on_click=None, on_long_press=None):
@@ -111,7 +216,10 @@ class RangeButton(ft.Container):
                 self._on_long_press(e)
 
 
-        self.text = ft.Text(starting_hand, color=ft.colors.ON_SECONDARY_CONTAINER)
+        self.text = ft.Text(
+            starting_hand,
+            color=ft.colors.ON_SECONDARY_CONTAINER,
+        )
 
         super().__init__(
             content=self.text,
@@ -219,7 +327,10 @@ class RangeEditor(ft.Stack):
 
 class EquityForm(ft.Column):
     def __init__(self, *, board_editor, range_editors):
+        self.board_editor = board_editor
+        self.range_editors = range_editors
 
+        self.error_message = ft.Text(color='#dd0000')
         self.data_table = ft.DataTable(
             columns=[
                 ft.DataColumn(ft.Text('Range')),
@@ -235,9 +346,6 @@ class EquityForm(ft.Column):
             ],
         )
 
-        self.board_editor = board_editor
-        self.range_editors = range_editors
-
         def run_equity_calc(e):
             board = frozenset(
                 card
@@ -245,7 +353,24 @@ class EquityForm(ft.Column):
                 if card and card.strip()
             )
 
+            if len(board) not in {0,3,4,5}:
+                self.error_message.value = 'Invalid number of board cards'
+                self.update()
+                return
+
             ranges = [re.range for re in self.range_editors]
+
+            if any(is_range_empty(r) for r in ranges):
+                self.error_message.value = 'One or more ranges contain(s) no combos'
+                self.update()
+                return
+
+            self.error_message.value = ''
+            self.controls = [
+                ft.ProgressRing(width=50, height=50, stroke_width=2)
+            ]
+            self.update()
+
             equities = equity.get_equity(board, ranges)
 
             self.data_table.rows = [
@@ -255,25 +380,33 @@ class EquityForm(ft.Column):
                 ])
                 for range_editor, eq in zip(self.range_editors, equities)
             ]
-            self.data_table.update()
+
+            self.controls = self.cached_controls
+            self.update()
+
+        self.cached_controls = [
+            ft.FilledButton(
+                text='Run Equity Calc',
+                style=ft.ButtonStyle(
+                    shape=ft.ContinuousRectangleBorder(radius=15),
+                    side=ft.BorderSide(width=0, color='transparent'),
+                ),
+                on_click=run_equity_calc,
+            ),
+            self.error_message,
+            self.data_table,
+        ]
 
         super().__init__(
             spacing=8,
-            controls=[
-                ft.FilledButton(
-                    text='Run Equity Calc',
-                    style=ft.ButtonStyle(
-                        shape=ft.ContinuousRectangleBorder(radius=15),
-                        side=ft.BorderSide(width=0, color='transparent'),
-                    ),
-                    on_click=run_equity_calc,
-                ),
-                self.data_table,
-            ],
+            width=200,
+            controls=self.cached_controls,
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
 def main(page: ft.Page):
-    board_editor = BoardEditor()
+    board_editor = BoardEditor2()
     hero_range_editor = RangeEditor(name='Hero')
     villain_range_editor = RangeEditor(name='Villain')
     equity_form = EquityForm(
